@@ -1,0 +1,28 @@
+xdriverprobe
+
+This program does dlopen() on your video drivers and checks if the drivers are
+capable of "driving" the pci devices of your machine. You can tell it to look
+for a specific driver and you can also pass a different place to look for the
+video drivers. There's also a verbose mode.
+
+The output is:
+(video driver) (vendor id):(device id) (probing method)
+
+= Compiling =
+
+There are 2 autoconf options you can pass:
+--with-module-dir: pass a different Xorg module dir (the default one is the
+  output of "pkg-config --variable=moduledir xorg-server")
+--with-extra-module-dir: pass an extra Xorg module dir (the default is not
+  having an extra module dir). This feature exists because some distros like
+  Mandriva have more than one module dir (for drivers like fglrx).
+
+= Problems =
+
+- There are a few drivers I ignore for now: vmware, ati, sisusb, v4l
+- Driver "nvidia" is not behaving correctly, probably because it calls
+  LoaderSymbol and we return NULL.
+- Drivers that load submodules (like cirrus) also don't quite work
+- I tried to add the smallest amount of symbols possible to symbols.c, so you
+  might get an "undefined symbol" error. Please report those so I can fix them.
+- This program was almost not tested
