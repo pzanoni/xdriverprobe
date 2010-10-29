@@ -1,9 +1,9 @@
 xdriverprobe
 
-This program does dlopen() on your video drivers and checks if the drivers are
-capable of "driving" the pci devices of your machine. You can tell it to look
-for a specific driver and you can also pass a different place to look for the
-video drivers. There's also a verbose mode.
+This program does dlopen() on your video drivers and checks if any of them
+support any devices of your machine. You can tell it to look for a specific
+driver and you can also pass a different place to look for the video drivers.
+There's also a verbose mode.
 
 The output is:
 (video driver) (vendor id):(device id) (probing method)
