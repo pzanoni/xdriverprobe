@@ -52,6 +52,10 @@
 #include <xorg/xf86Priv.h>
 #include <xorg/xf86str.h>
 
+#if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(6,0)
+#error Video ABI is unsupported (too old)
+#endif
+
 #if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(8,0)
 _X_EXPORT DevPrivateKeyRec    miZeroLineScreenKeyRec;
 _X_EXPORT DevPrivateKeyRec    PictureScreenPrivateKeyRec;

@@ -59,6 +59,7 @@ char *extraModulePath = EXTRA_MODULE_DIR "/drivers";
 char *extraModulePath = NULL;
 #endif
 int verbose = 0;
+enum { PRINT_DEVS_PRESENT, PRINT_DEVS_SUPPORTED } mode = PRINT_DEVS_PRESENT;
 
 
 int xf86MatchDevice(const char *driverName, GDevPtr **driverSectList)
@@ -77,43 +78,53 @@ pointer xf86LoadDrvSubModule(DriverPtr drv, const char *name)
     return NULL;
 }
 
-void detected(uint32_t vendor_id, uint32_t device_id, char *driverName,
-	      char *detectionMethod)
+void detected(uint32_t vendor_id, uint32_t device_id, char *driverName)
 {
-    printf("%s %.4x:%.4x %s\n", driverName, vendor_id, device_id,
-	   detectionMethod);
+    printf("%s %.4x:%.4x\n", driverName, vendor_id, device_id);
+}
+
+/* Checks if a device is present in the machine running the program
+ * The "driverName" argument is only used when printing.
+ * XXX: cache the libpciaccess information so we don't need to call it many
+ *      times? */
+Bool findDeviceOnMachine(const struct pci_id_match *match, char *driverName)
+{
+    struct pci_device *dev;
+    struct pci_device_iterator *iter;
+    Bool ret = FALSE;
+
+    iter = pci_id_match_iterator_create(match);
+    while ((dev = pci_device_next(iter)) != NULL) {
+	detected(dev->vendor_id, dev->device_id, driverName);
+	ret = TRUE;
+	break;
+    }
+    pci_iterator_destroy(iter);
+    return ret;
+}
+
+/* XXX: find a better name for this function */
+void diagnose(const struct pci_id_match *match, char *driverName)
+{
+    if (mode == PRINT_DEVS_PRESENT)
+	findDeviceOnMachine(match, driverName);
+    else
+	printf("%s %.4x:%.4x\n", driverName, match->vendor_id,
+	       match->device_id);
 }
 
 void probeUsingSupportedDevices(DriverPtr driver)
 {
     const struct pci_id_match *supported_devs = driver->supported_devices;
     int i;
-    struct pci_device *dev;
-    struct pci_device_iterator *iter;
 
-    pci_system_init();
-
-    print_log("\nMatching:\n");
-    iter = pci_id_match_iterator_create(NULL);
-    while ((dev = pci_device_next(iter)) != NULL) {
-	for (i = 0; ; i++) {
-	    if (supported_devs[i].vendor_id == 0 &&
-		supported_devs[i].device_id == 0 &&
-		supported_devs[i].subvendor_id == 0)
-		break;
-
-	    if (PCI_ID_COMPARE(supported_devs[i].vendor_id, dev->vendor_id) &&
-		PCI_ID_COMPARE(supported_devs[i].device_id, dev->device_id) &&
-		((supported_devs[i].device_class_mask & dev->device_class)
-		 == supported_devs[i].device_class)) {
-		detected(dev->vendor_id, dev->device_id, driver->driverName,
-			 "supported_devices");
-	    }
-	}
+    for (i = 0; ; i++) {
+	if (supported_devs[i].vendor_id == 0 &&
+	    supported_devs[i].device_id == 0 &&
+	    supported_devs[i].subvendor_id == 0)
+	    break;
+	diagnose(&supported_devs[i], driver->driverName);
     }
-
-    pci_iterator_destroy(iter);
-    pci_system_cleanup();
 }
 
 
@@ -122,47 +133,36 @@ int xf86MatchPciInstances(const char *driverName, int vendorID,
 			  GDevPtr *devList, int numDevs, DriverPtr driver,
 			  int **foundEntities)
 {
+    /* According to comments inside Xorg's xf86MatchPciInstances, some drivers
+     * might work even if the device_ids don't match (but vendor_id has to
+     * match) */
     int i;
-    struct pci_device_iterator *iter;
-    struct pci_device *dev;
 
-    unsigned int vendorId, deviceId, matchClass;
+    struct pci_id_match match;
 
-    print_log("xf86MatchPciInstances:\n");
-    print_log("driverName: %s\n", driverName);
-    print_log("vendorId:   %d\n", vendorID);
-    print_log("numDevs:    %d\n", numDevs);
-
-    pci_system_init();
-
-    iter = pci_id_match_iterator_create(NULL);
-    while ((dev = pci_device_next(iter)) != NULL) {
-	for(i = 0; PCIchipsets[i].PCIid != -1; i++) {
-	    vendorId = (PCIchipsets[i].PCIid & 0xFFFF0000) >> 16;
-	    deviceId = (PCIchipsets[i].PCIid & 0x0000FFFF);
-	    /* Read comments inside the PciChipsets struct definition to try to
-	     * understand this matchClass hack */
-	    matchClass = 0x00030000 | PCIchipsets[i].PCIid;
-
-	    /* XXX: convert dev->device_class from 0x00000101 to 0x00030000? */
-	    /* XXX: can PCI_ID_COMPARE be used here? */
-	    if ((vendorID == PCI_VENDOR_GENERIC) &&
-		(matchClass == dev->device_class)) {
-		/* It looks like the generic drivers have the supported_devices
-		 * field, so they won't get here... */
-		detected(dev->vendor_id, dev->device_id, driver->driverName,
-			 "probe generic");
+    for(i = 0; PCIchipsets[i].PCIid != -1; i++) {
+	if (vendorID == PCI_VENDOR_GENERIC) {
+	    match.vendor_id = PCI_MATCH_ANY;
+	    match.device_id = PCI_MATCH_ANY;
+	    /* XXX: what about devices with class 0x00000101? */
+	    match.device_class = 0x00030000 | PCIchipsets[i].PCIid;
+	    match.device_class_mask = 0xFFFFFFFF;
+	} else {
+	    if (vendorID != 0) {
+		match.vendor_id = vendorID;
+	    } else {
+		match.vendor_id = (PCIchipsets[i].PCIid & 0xFFFF0000) >> 16;
 	    }
-	    if ((vendorId == dev->vendor_id) &&
-		(deviceId == dev->device_id)) {
-		/* XXX: compare dev->device_class? */
-		detected(dev->vendor_id, dev->device_id, driver->driverName,
-			 "probe");
-	    }
+	    match.device_id = (PCIchipsets[i].PCIid & 0x0000FFFF);
+	    match.device_class = 0;
+	    match.device_class_mask = 0;
 	}
+	match.subvendor_id = PCI_MATCH_ANY;
+	match.subdevice_id = PCI_MATCH_ANY;
+
+	diagnose(&match, driver->driverName);
     }
 
-    pci_system_cleanup();
     *foundEntities = NULL;
     return 0;
 }
@@ -228,9 +228,24 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir)
 	return 1;
     }
 
-    /* XXX: do some API/ABI checking! */
-
     printModuleData(moduleData);
+
+    if (strcmp(moduleData->vers->abiclass, ABI_CLASS_VIDEODRV) != 0) {
+	fprintf(stderr, "Error: abiclass is not %s\n", ABI_CLASS_VIDEODRV);
+	return 1;
+    }
+
+    if (GET_ABI_MAJOR(moduleData->vers->abiversion) < 6) {
+	fprintf(stderr, "Error: video driver ABI is too old: %d\n",
+		GET_ABI_MAJOR(moduleData->vers->abiversion));
+	return 1;
+    }
+
+    /* fbdev has NULL moduleclass
+    if (strcmp(moduleData->vers->moduleclass, MOD_CLASS_VIDEODRV) != 0) {
+	fprintf(stderr, "Error: moduleclass is not %s\n", MOD_CLASS_VIDEODRV);
+	return 1;
+    } */
 
     setupRc = moduleData->setup(NULL, NULL, &errmaj, &errmin);
     if (!setupRc) {
@@ -276,16 +291,20 @@ int findCardsForAllDrivers()
     char driverCanonicalName[NAME_MAX];
     char *modulePaths[3] = { defaultModulePath, extraModulePath, NULL };
     int i;
+    int ret = 0;
 
-    for(i = 0; modulePaths[i] != NULL; i++) {
+    assert(pci_system_init() == 0);
+
+    rc = regcomp(&driversRegex, "^(.*)_drv\\.so$", REG_EXTENDED);
+    assert(rc == 0);
+
+    for(i = 0; (modulePaths[i] != NULL) && (!ret); i++) {
 	driversDir = opendir(modulePaths[i]);
 	if (driversDir == NULL) {
 	    fprintf(stderr, "Error opening %s directory\n", modulePaths[i]);
-	    return 1;
+	    ret = 1;
+	    break;
 	}
-
-	rc = regcomp(&driversRegex, "^(.*)_drv\\.so$", REG_EXTENDED);
-	assert(rc == 0);
 
 	while ( (entry = readdir(driversDir)) ) {
 	    rc = regexec(&driversRegex, entry->d_name, 2, matches, 0);
@@ -298,7 +317,8 @@ int findCardsForAllDrivers()
 		if (!ignoredDriver(driverCanonicalName)) {
 		    if (findCardsForDriver(driverCanonicalName,
 					   modulePaths[i]) != 0) {
-			return 1;
+			ret = 1;
+			break;
 		    }
 		}
 
@@ -309,25 +329,30 @@ int findCardsForAllDrivers()
 
 	closedir(driversDir);
     }
-    return 0;
+
+    regfree(&driversRegex);
+    pci_system_cleanup();
+    return ret;
 }
 
 void printUsage(char *progName)
 {
     fprintf(stderr, "Usage: %s [options]\n"
 	    "Options:\n"
-	    " -d driver  check only driver, not all of them\n"
+	    " -d driver  check only \"driver\", not all of them\n"
 	    " -m path    change driver module path to \"path\"\n"
 	    " -e path    add an extra driver module path to be searched\n"
+	    " -a         print all devices supported by each video driver "
+	    "instead of only the ones found in your machine\n"
 	    " -v         print more information\n"
-	    " -h         prints this help\n",
+	    " -h         print this help\n",
 	    progName);
 }
 
 int main(int argc, char *argv[])
 {
     int opt;
-    while ((opt = getopt(argc, argv, "d:m:e:vh")) != -1) {
+    while ((opt = getopt(argc, argv, "d:m:e:avh")) != -1) {
 	switch(opt) {
 	case 'd':
 	    driverToUse = optarg;
@@ -337,6 +362,9 @@ int main(int argc, char *argv[])
 	    break;
 	case 'e':
 	    extraModulePath = optarg;
+	    break;
+	case 'a':
+	    mode = PRINT_DEVS_SUPPORTED;
 	    break;
 	case 'v':
 	    verbose = 1;

@@ -1,12 +1,18 @@
-xdriverprobe
+xdriverprobe: probe Xorg drivers to check for supported video cards
 
-This program does dlopen() on your video drivers and checks if any of them
-support any devices of your machine. You can tell it to look for a specific
-driver and you can also pass a different place to look for the video drivers.
-There's also a verbose mode.
+There are two main purposes for this program:
+- to check if any of the devices present in your machine are supported by the
+  Xorg video drivers
+- to print a list of PCI ids supported by each Xorg video driver
 
-The output is:
-(video driver) (vendor id):(device id) (probing method)
+You can tell it to look for a specific driver and you can also pass a different
+place to look for the video drivers.  There's also a verbose mode.
+
+Main use cases:
+"xdriverprobe": prints the names of the drivers that support your video cards
+and the device id and vendor id of the supported devices
+"xdriverprobe -a": prints a list of supported devices for each video driver
+"xdriverprobe -h": lists the other options!
 
 = Compiling =
 
