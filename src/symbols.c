@@ -21,6 +21,8 @@
  * Author: Paulo Zanoni <pzanoni@mandriva.com>
  */
 
+#include <stdlib.h>
+
 #include "utils.h"
 
 /* Here are the symbols that we don't care much about: implementations are just
@@ -170,7 +172,7 @@ _X_EXPORT OsTimerPtr TimerSet(OsTimerPtr timer, int flags, CARD32 millis,
     { print_log("function %s called!\n", __FUNCTION__); return NULL; }
 
 _X_EXPORT void Xfree(pointer p)
-    { print_log("function %s called!\n", __FUNCTION__); }
+    { print_log("function %s called!\n", __FUNCTION__); free(p); }
 
 _X_EXPORT void xf86DPMSSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 			   int flags)
