@@ -106,11 +106,19 @@ Bool findDeviceOnMachine(const struct pci_id_match *match, char *driverName)
 /* XXX: find a better name for this function */
 void diagnose(const struct pci_id_match *match, char *driverName)
 {
-    if (mode == PRINT_DEVS_PRESENT)
+    if (mode == PRINT_DEVS_PRESENT) {
 	findDeviceOnMachine(match, driverName);
-    else
-	printf("%s %.4x:%.4x\n", driverName, match->vendor_id,
-	       match->device_id);
+    } else { /* PRINT_DEVS_SUPPORTED */
+	printf("%s ", driverName);
+	if (match->vendor_id == (uint32_t) PCI_MATCH_ANY)
+	    printf("any:");
+	else
+	    printf("%.4x:", match->vendor_id);
+	if (match->device_id == (uint32_t) PCI_MATCH_ANY)
+	    printf("any\n");
+	else
+	    printf("%.4x\n", match->device_id);
+    }
 }
 
 void probeUsingSupportedDevices(DriverPtr driver)
