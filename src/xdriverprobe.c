@@ -51,7 +51,7 @@ _X_EXPORT int xf86MatchDevice(const char *driverName, GDevPtr **driverSectList);
 
 
 /* Global variables changed by program arguments: */
-char *driverToUse = NULL;
+const char *driverToUse = NULL;
 char *defaultModulePath = MODULE_DIR "/drivers";
 #ifdef EXTRA_MODULE_DIR
 char *extraModulePath = EXTRA_MODULE_DIR "/drivers";
@@ -61,6 +61,8 @@ char *extraModulePath = NULL;
 int verbose = 0;
 enum { PRINT_DEVS_PRESENT, PRINT_DEVS_SUPPORTED } mode = PRINT_DEVS_PRESENT;
 
+
+int findModulesAndProcess(Bool lookingForSubModules);
 
 int xf86MatchDevice(const char *driverName, GDevPtr **driverSectList)
 {
@@ -73,8 +75,11 @@ int xf86MatchDevice(const char *driverName, GDevPtr **driverSectList)
 
 pointer xf86LoadDrvSubModule(DriverPtr drv, const char *name)
 {
-    /* XXX: actually load the module! */
-    print_log("not loading submodule %s\n", name);
+    const char *backup = driverToUse;
+    print_log("Loading submodule: %s\n", name);
+    driverToUse = name;
+    findModulesAndProcess(TRUE);
+    driverToUse = backup;
     return NULL;
 }
 
@@ -205,7 +210,8 @@ void printModuleData(XF86ModuleData *moduleData)
 }
 
 /* This function opens the driver and then calls its "setup" function */
-int findCardsForDriver(char *driverCanonicalName, char *driverDir)
+int findCardsForDriver(char *driverCanonicalName, char *driverDir,
+		       Bool isSubModule)
 {
     int rc;
     const int bufferSize = 128;
@@ -217,13 +223,18 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir)
     int errmaj, errmin;
     void *setupRc;
 
-    rc = snprintf(driverPath, bufferSize, "%s/%s_drv.so",
-		  driverDir, driverCanonicalName);
+    if (isSubModule)
+	rc = snprintf(driverPath, bufferSize, "%s/%s.so",
+		      driverDir, driverCanonicalName);
+    else
+	rc = snprintf(driverPath, bufferSize, "%s/%s_drv.so",
+		      driverDir, driverCanonicalName);
     assert(rc != bufferSize && rc >= 0);
     rc = snprintf(driverData, bufferSize, "%sModuleData", driverCanonicalName);
     assert(rc != bufferSize && rc >= 0);
 
-    handle = dlopen(driverPath, RTLD_LAZY);
+    /* RTLD_GLOBAL is required for loading subModules */
+    handle = dlopen(driverPath, RTLD_LAZY | RTLD_GLOBAL);
     if (!handle) {
 	fprintf(stderr, "Error opening driver: %s\n", dlerror());
 	return 1;
@@ -287,9 +298,10 @@ Bool ignoredDriver(char *name)
 }
 
 /* This function looks in defaultModulePath and extraModulePath for files whose
- * name end with "_drv.so" and don't return true for the "ignoredDriver"
- * function. Then it calls "findCardsForDriver" to each match. */
-int findCardsForAllDrivers()
+ * name end with "_drv.so" (or just ".so" in case of submodules) and don't
+ * return true for the "ignoredDriver" function. Then it calls
+ * "findCardsForDriver" to each match. */
+int findModulesAndProcess(Bool lookingForSubModules)
 {
     DIR *driversDir;
     struct dirent *entry;
@@ -301,9 +313,11 @@ int findCardsForAllDrivers()
     int i;
     int ret = 0;
 
-    assert(pci_system_init() == 0);
-
-    rc = regcomp(&driversRegex, "^(.*)_drv\\.so$", REG_EXTENDED);
+    /* For some reason the cirrus submodules don't have "_drv" in their names */
+    if (lookingForSubModules)
+	rc = regcomp(&driversRegex, "^(.*)\\.so$", REG_EXTENDED);
+    else
+	rc = regcomp(&driversRegex, "^(.*)_drv\\.so$", REG_EXTENDED);
     assert(rc == 0);
 
     for(i = 0; (modulePaths[i] != NULL) && (!ret); i++) {
@@ -323,8 +337,8 @@ int findCardsForAllDrivers()
 		print_log("%s\n", driverCanonicalName);
 
 		if (!ignoredDriver(driverCanonicalName)) {
-		    if (findCardsForDriver(driverCanonicalName,
-					   modulePaths[i]) != 0) {
+		    if (findCardsForDriver(driverCanonicalName, modulePaths[i],
+			(lookingForSubModules) ? TRUE : FALSE) != 0) {
 			ret = 1;
 			break;
 		    }
@@ -339,7 +353,6 @@ int findCardsForAllDrivers()
     }
 
     regfree(&driversRegex);
-    pci_system_cleanup();
     return ret;
 }
 
@@ -360,6 +373,7 @@ void printUsage(char *progName)
 int main(int argc, char *argv[])
 {
     int opt;
+    int ret = 0;
     while ((opt = getopt(argc, argv, "d:m:e:avh")) != -1) {
 	switch(opt) {
 	case 'd':
@@ -392,5 +406,8 @@ int main(int argc, char *argv[])
 	      "verbose:           %d\n",
 	      driverToUse, defaultModulePath, extraModulePath, verbose);
 
-    return findCardsForAllDrivers();
+    assert(pci_system_init() == 0);
+    ret = findModulesAndProcess(FALSE);
+    pci_system_cleanup();
+    return ret;
 }
