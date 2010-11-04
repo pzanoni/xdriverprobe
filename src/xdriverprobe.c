@@ -204,8 +204,8 @@ void printModuleData(XF86ModuleData *moduleData)
     print_log("patchlevel:   %hd\n", moduleData->vers->patchlevel);
     print_log("abiclass:     %s\n", moduleData->vers->abiclass);
     print_log("abiversion:   %hu.%hu\n",
-	   GET_ABI_MAJOR(moduleData->vers->abiversion),
-	   GET_ABI_MINOR(moduleData->vers->abiversion));
+	      GET_ABI_MAJOR(moduleData->vers->abiversion),
+	      GET_ABI_MINOR(moduleData->vers->abiversion));
     print_log("moduleclass:  %s\n", moduleData->vers->moduleclass);
 }
 
@@ -255,7 +255,7 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
     }
 
     if (GET_ABI_MAJOR(moduleData->vers->abiversion) < 6) {
-	fprintf(stderr, "Error: video driver ABI is too old: %d\n",
+	fprintf(stderr, "Error: video driver ABI is too old: %u\n",
 		GET_ABI_MAJOR(moduleData->vers->abiversion));
 	return 1;
     }
