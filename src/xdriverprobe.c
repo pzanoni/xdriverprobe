@@ -290,7 +290,8 @@ Bool ignoredDriver(char *name)
     }
 
     if (strcmp(name, "vmware") == 0 || strcmp(name, "v4l") == 0 ||
-	strcmp(name, "sisusb") == 0 || strcmp(name, "ati") == 0) {
+	strcmp(name, "sisusb") == 0 || strcmp(name, "ati") == 0 ||
+	strcmp(name, "nvidia") == 0) {
 	print_log("Ignoring driver %s\n", name);
 	return TRUE;
     }
