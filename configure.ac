@@ -25,6 +25,7 @@ AC_PREREQ([2.65])
 AC_INIT([xdriverprobe], [0.1], [pzanoni@mandriva.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror dist-bzip2])
+AM_MAINTAINER_MODE
 AC_PROG_CC
 
 AC_CHECK_LIB([dl], [dlopen])
