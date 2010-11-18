@@ -72,6 +72,7 @@ _X_EXPORT DevPrivateKey       xf86ScreenKey;
 
 _X_EXPORT const unsigned char byte_reversed[256];
 _X_EXPORT ClientPtr           clients[MAXCLIENTS];
+_X_EXPORT CallbackListPtr     ClientStateCallback;
 _X_EXPORT xf86MonPtr          ConfiguredMonitor;
 _X_EXPORT TimeStamp           currentTime;
 _X_EXPORT EventSwapPtr        EventSwapVector[128];
