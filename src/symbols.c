@@ -32,7 +32,9 @@
 #define PANORAMIX
 #define XORG_VERSION_CURRENT 0
 
+#include <xorg/cursor.h>
 #include <xorg/dix.h>
+#include <xorg/dixevents.h>
 #include <xorg/dixstruct.h>
 #include <xorg/edid.h>
 #include <xorg/extension.h>
@@ -43,11 +45,13 @@
 #include <xorg/misc.h>
 #include <xorg/migc.h>
 #include <xorg/miline.h>
+#include <xorg/opaque.h>
 #include <xorg/os.h>
 #include <xorg/panoramiXsrv.h>
 #include <xorg/picturestr.h>
 #include <xorg/randrstr.h>
 #include <xorg/servermd.h>
+#include <xorg/windowstr.h>
 #include <xorg/xf86.h>
 #include <xorg/xf86Crtc.h>
 #include <xorg/xf86Module.h>
@@ -75,6 +79,8 @@ _X_EXPORT ClientPtr           clients[MAXCLIENTS];
 _X_EXPORT CallbackListPtr     ClientStateCallback;
 _X_EXPORT xf86MonPtr          ConfiguredMonitor;
 _X_EXPORT TimeStamp           currentTime;
+_X_EXPORT volatile char       dispatchException;
+_X_EXPORT Bool                DPMSEnabled = FALSE;
 _X_EXPORT EventSwapPtr        EventSwapVector[128];
 _X_EXPORT CallbackListPtr     FlushCallback;
 _X_EXPORT unsigned long       globalSerialNumber = 0;
@@ -82,16 +88,22 @@ _X_EXPORT InputInfo           inputInfo;
 _X_EXPORT BoxRec              miEmptyBox;
 _X_EXPORT RegDataRec          miEmptyData;
 _X_EXPORT int                 monitorResolution = 0;
+_X_EXPORT Bool                noCompositeExtension = TRUE;
 _X_EXPORT Bool                noPanoramiXExtension = TRUE;
+_X_EXPORT Bool                noRenderExtension = TRUE;
+_X_EXPORT Bool                noRRExtension = TRUE;
+_X_EXPORT Bool                noXFree86DRIExtension = TRUE;
 #if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(8,0)
 _X_EXPORT PanoramiXData      *panoramiXdataPtr;
 #endif
+_X_EXPORT int                 PanoramiXNumScreens = 0;
 _X_EXPORT PaddingInfo         PixmapWidthPaddingInfo[0]; /* dix has 33, not 0 */
 #if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(8,0)
 _X_EXPORT BoxRec              RegionEmptyBox;
 _X_EXPORT RegDataRec          RegionEmptyData;
 #endif
 _X_EXPORT ScreenInfo          screenInfo;
+_X_EXPORT int                 screenIsSaved = 0;
 _X_EXPORT ClientPtr           serverClient;
 _X_EXPORT unsigned long       serverGeneration = 0;
 _X_EXPORT CallbackListPtr     ServerGrabCallback;
@@ -100,7 +112,20 @@ _X_EXPORT unsigned long       XRC_DRAWABLE = 0;
 _X_EXPORT confDRIRec          xf86ConfigDRI;
 _X_EXPORT serverLayoutRec     xf86ConfigLayout;
 _X_EXPORT int                 xf86CrtcConfigPrivateIndex = 0;
+_X_EXPORT const DisplayModeRec xf86DefaultModes[];
+_X_EXPORT xf86InfoRec         xf86Info;
 _X_EXPORT ScrnInfoPtr        *xf86Screens = NULL;
+_X_EXPORT unsigned long       XRT_WINDOW = 0;
+
+/* This one is inside xf86Glocals.c (not .h!): */
+_X_EXPORT XF86ConfigPtr xf86configptr = NULL;
+
+
+_X_EXPORT CursorPtr GetSpriteCursor(DeviceIntPtr pDev)
+    { print_log("function %s called!\n", __FUNCTION__); return NULL; }
+
+_X_EXPORT void GetSpritePosition(struct _DeviceIntRec *pDev, int *px, int *py)
+    { print_log("function %s called!\n", __FUNCTION__); }
 
 _X_EXPORT pointer LoaderSymbol(const char *symbol)
     { print_log("function %s called!\n", __FUNCTION__); return NULL; }
