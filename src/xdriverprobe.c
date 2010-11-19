@@ -265,7 +265,11 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
 	goto done;
     }
 
-    if (strcmp(moduleData->vers->abiclass, ABI_CLASS_VIDEODRV) != 0) {
+    if (!moduleData->vers->abiclass) {
+	print_log("Driver has NULL abiclass. Skipping\n");
+	ret = 0;
+	goto done;
+    } else if (strcmp(moduleData->vers->abiclass, ABI_CLASS_VIDEODRV) != 0) {
 	fprintf(stderr, "Error: abiclass is not %s\n", ABI_CLASS_VIDEODRV);
 	ret = 1;
 	goto done;
@@ -278,11 +282,14 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
 	goto done;
     }
 
-    /* fbdev has NULL moduleclass
-    if (strcmp(moduleData->vers->moduleclass, MOD_CLASS_VIDEODRV) != 0) {
+    /* fbdev has NULL moduleclass */
+    if (!moduleData->vers->moduleclass) {
+	print_log("Warning: driver has NULL moduleclass.\n");
+    } else if (strcmp(moduleData->vers->moduleclass, MOD_CLASS_VIDEODRV) != 0) {
 	fprintf(stderr, "Error: moduleclass is not %s\n", MOD_CLASS_VIDEODRV);
-	return 1;
-    } */
+	ret = 1;
+	goto done;
+    }
 
     setupRc = moduleData->setup(NULL, NULL, &errmaj, &errmin);
     if (!setupRc) {
@@ -312,8 +319,7 @@ Bool ignoredDriver(char *name)
     }
 
     if (strcmp(name, "vmware") == 0 || strcmp(name, "v4l") == 0 ||
-	strcmp(name, "sisusb") == 0 || strcmp(name, "ati") == 0 ||
-	strcmp(name, "nvidia") == 0) {
+	strcmp(name, "sisusb") == 0 || strcmp(name, "ati") == 0) {
 	print_log("Ignoring driver %s\n", name);
 	return TRUE;
     }

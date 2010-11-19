@@ -26,10 +26,13 @@ There are 2 autoconf options you can pass:
 
 = Problems =
 
-- There are a few drivers I ignore for now: vmware, ati, sisusb, v4l, nvidia.
+- There are a few drivers I ignore for now: vmware, ati, sisusb, v4l.
   Run "xdriverprobe -d nameoftheignoreddriver" to bypass the ignore. You'll
   probably get segfaults. Note: ignoring ati is not a problem since I don't
   ignore radeon and its other children
+- The "nvidia" and "fglrx" drivers get ignored because they have a null
+  abiclass. If you remove the checks they'll segfault anyway... You can still
+  use "-o moduledata" with them.
 - I tried to add the smallest amount of symbols possible to symbols.c, so you
   might get an "undefined symbol" error. Please report those so I can fix them.
 - This program was almost not tested
