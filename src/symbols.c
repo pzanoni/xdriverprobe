@@ -76,13 +76,13 @@ _X_EXPORT DevPrivateKey       xf86ScreenKey;
 
 _X_EXPORT const unsigned char byte_reversed[256];
 _X_EXPORT ClientPtr           clients[MAXCLIENTS];
-_X_EXPORT CallbackListPtr     ClientStateCallback;
-_X_EXPORT xf86MonPtr          ConfiguredMonitor;
+_X_EXPORT CallbackListPtr     ClientStateCallback = NULL;
+_X_EXPORT xf86MonPtr          ConfiguredMonitor = NULL;
 _X_EXPORT TimeStamp           currentTime;
 _X_EXPORT volatile char       dispatchException;
 _X_EXPORT Bool                DPMSEnabled = FALSE;
 _X_EXPORT EventSwapPtr        EventSwapVector[128];
-_X_EXPORT CallbackListPtr     FlushCallback;
+_X_EXPORT CallbackListPtr     FlushCallback = NULL;
 _X_EXPORT unsigned long       globalSerialNumber = 0;
 _X_EXPORT InputInfo           inputInfo;
 _X_EXPORT BoxRec              miEmptyBox;
@@ -94,7 +94,7 @@ _X_EXPORT Bool                noRenderExtension = TRUE;
 _X_EXPORT Bool                noRRExtension = TRUE;
 _X_EXPORT Bool                noXFree86DRIExtension = TRUE;
 #if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(8,0)
-_X_EXPORT PanoramiXData      *panoramiXdataPtr;
+_X_EXPORT PanoramiXData      *panoramiXdataPtr = NULL;
 #endif
 _X_EXPORT int                 PanoramiXNumScreens = 0;
 _X_EXPORT PaddingInfo         PixmapWidthPaddingInfo[0]; /* dix has 33, not 0 */
@@ -104,15 +104,15 @@ _X_EXPORT RegDataRec          RegionEmptyData;
 #endif
 _X_EXPORT ScreenInfo          screenInfo;
 _X_EXPORT int                 screenIsSaved = 0;
-_X_EXPORT ClientPtr           serverClient;
+_X_EXPORT ClientPtr           serverClient = NULL;
 _X_EXPORT unsigned long       serverGeneration = 0;
-_X_EXPORT CallbackListPtr     ServerGrabCallback;
+_X_EXPORT CallbackListPtr     ServerGrabCallback = NULL;
 _X_EXPORT WindowPtr           WindowTable[MAXSCREENS];
 _X_EXPORT unsigned long       XRC_DRAWABLE = 0;
 _X_EXPORT confDRIRec          xf86ConfigDRI;
 _X_EXPORT serverLayoutRec     xf86ConfigLayout;
 _X_EXPORT int                 xf86CrtcConfigPrivateIndex = 0;
-_X_EXPORT const DisplayModeRec xf86DefaultModes[];
+_X_EXPORT const DisplayModeRec xf86DefaultModes[0];
 _X_EXPORT xf86InfoRec         xf86Info;
 _X_EXPORT ScrnInfoPtr        *xf86Screens = NULL;
 _X_EXPORT unsigned long       XRT_WINDOW = 0;
