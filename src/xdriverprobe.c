@@ -265,7 +265,7 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
 	goto done;
     }
 
-    if (!moduleData->vers->abiclass) {
+    if (moduleData->vers->abiclass == ABI_CLASS_NONE) {
 	print_log("Driver has NULL abiclass. Skipping\n");
 	ret = 0;
 	goto done;
@@ -283,7 +283,7 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
     }
 
     /* fbdev has NULL moduleclass */
-    if (!moduleData->vers->moduleclass) {
+    if (moduleData->vers->moduleclass == MOD_CLASS_NONE) {
 	print_log("Warning: driver has NULL moduleclass.\n");
     } else if (strcmp(moduleData->vers->moduleclass, MOD_CLASS_VIDEODRV) != 0) {
 	fprintf(stderr, "Error: moduleclass is not %s\n", MOD_CLASS_VIDEODRV);
