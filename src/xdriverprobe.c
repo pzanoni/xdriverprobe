@@ -219,6 +219,7 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
 		       Bool isSubModule)
 {
     int rc;
+    int ret = 0;
     const int bufferSize = 128;
     char driverPath[bufferSize];
     char driverData[bufferSize];
@@ -252,24 +253,29 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
     error = dlerror();
     if (error) {
 	fprintf(stderr, "Error retrieving driver data: %s\n", error);
-	return 1;
+	ret = 1;
+	goto done;
     }
 
     if (mode == PRINT_MODULE_DATA || verbose)
 	printModuleData(moduleData);
 
-    if (mode == PRINT_MODULE_DATA)
-	return 0;
+    if (mode == PRINT_MODULE_DATA) {
+	ret = 0;
+	goto done;
+    }
 
     if (strcmp(moduleData->vers->abiclass, ABI_CLASS_VIDEODRV) != 0) {
 	fprintf(stderr, "Error: abiclass is not %s\n", ABI_CLASS_VIDEODRV);
-	return 1;
+	ret = 1;
+	goto done;
     }
 
     if (GET_ABI_MAJOR(moduleData->vers->abiversion) < 6) {
 	fprintf(stderr, "Error: video driver ABI is too old: %u\n",
 		GET_ABI_MAJOR(moduleData->vers->abiversion));
-	return 1;
+	ret = 1;
+	goto done;
     }
 
     /* fbdev has NULL moduleclass
@@ -282,14 +288,18 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
     if (!setupRc) {
 	fprintf(stderr, "Error: !setupRc (errmaj=%d errmin=%d)\n",
 		errmaj, errmin);
-	return 1;
+	ret = 1;
+	goto done;
     }
     if (!moduleData->setup) {
 	fprintf(stderr, "Error: module doesn't have a setup function\n");
-	return 1;
+	ret = 1;
+	goto done;
     }
 
-    return 0;
+done:
+    dlclose(handle);
+    return ret;
 }
 
 Bool ignoredDriver(char *name)
