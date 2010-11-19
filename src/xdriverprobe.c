@@ -59,7 +59,11 @@ char *extraModulePath = EXTRA_MODULE_DIR "/drivers";
 char *extraModulePath = NULL;
 #endif
 int verbose = 0;
-enum { PRINT_DEVS_PRESENT, PRINT_DEVS_SUPPORTED } mode = PRINT_DEVS_PRESENT;
+enum {
+    PRINT_DEVS_PRESENT,
+    PRINT_DEVS_SUPPORTED,
+    PRINT_MODULE_DATA
+} mode = PRINT_DEVS_PRESENT;
 
 
 int findModulesAndProcess(Bool lookingForSubModules);
@@ -196,17 +200,18 @@ void xf86AddDriver(DriverPtr driver, pointer module, int flags)
 
 void printModuleData(XF86ModuleData *moduleData)
 {
-    print_log("modname:      %s\n", moduleData->vers->modname);
-    print_log("vendor:       %s\n", moduleData->vers->vendor);
-    print_log("xf86version:  %u\n", moduleData->vers->xf86version);
-    print_log("majorversion: %hhd\n", moduleData->vers->majorversion);
-    print_log("minorversion: %hhd\n", moduleData->vers->minorversion);
-    print_log("patchlevel:   %hd\n", moduleData->vers->patchlevel);
-    print_log("abiclass:     %s\n", moduleData->vers->abiclass);
-    print_log("abiversion:   %hu.%hu\n",
-	      GET_ABI_MAJOR(moduleData->vers->abiversion),
-	      GET_ABI_MINOR(moduleData->vers->abiversion));
-    print_log("moduleclass:  %s\n", moduleData->vers->moduleclass);
+    printf("modname:      %s\n", moduleData->vers->modname);
+    printf("vendor:       %s\n", moduleData->vers->vendor);
+    printf("xf86version:  %u\n", moduleData->vers->xf86version);
+    printf("majorversion: %hhd\n", moduleData->vers->majorversion);
+    printf("minorversion: %hhd\n", moduleData->vers->minorversion);
+    printf("patchlevel:   %hd\n", moduleData->vers->patchlevel);
+    printf("abiclass:     %s\n", moduleData->vers->abiclass);
+    printf("abiversion:   %hu.%hu\n",
+	   GET_ABI_MAJOR(moduleData->vers->abiversion),
+	   GET_ABI_MINOR(moduleData->vers->abiversion));
+    printf("moduleclass:  %s\n", moduleData->vers->moduleclass);
+    printf("\n");
 }
 
 /* This function opens the driver and then calls its "setup" function */
@@ -222,6 +227,9 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
     XF86ModuleData *moduleData;
     int errmaj, errmin;
     void *setupRc;
+
+    print_log("-- Checking driver %s from %s\n", driverCanonicalName,
+	      driverDir);
 
     if (isSubModule)
 	rc = snprintf(driverPath, bufferSize, "%s/%s.so",
@@ -247,7 +255,11 @@ int findCardsForDriver(char *driverCanonicalName, char *driverDir,
 	return 1;
     }
 
-    printModuleData(moduleData);
+    if (mode == PRINT_MODULE_DATA || verbose)
+	printModuleData(moduleData);
+
+    if (mode == PRINT_MODULE_DATA)
+	return 0;
 
     if (strcmp(moduleData->vers->abiclass, ABI_CLASS_VIDEODRV) != 0) {
 	fprintf(stderr, "Error: abiclass is not %s\n", ABI_CLASS_VIDEODRV);
@@ -332,7 +344,7 @@ int findModulesAndProcess(Bool lookingForSubModules)
 	while ( (entry = readdir(driversDir)) ) {
 	    rc = regexec(&driversRegex, entry->d_name, 2, matches, 0);
 	    if (rc == 0) {
-		print_log("\n--- driver: ");
+		print_log("found driver: ");
 		substrcpy(driverCanonicalName, entry->d_name,
 			  matches[1].rm_so, matches[1].rm_eo);
 		print_log("%s\n", driverCanonicalName);
@@ -360,14 +372,20 @@ int findModulesAndProcess(Bool lookingForSubModules)
 void printUsage(char *progName)
 {
     fprintf(stderr, "Usage: %s [options]\n"
-	    "Options:\n"
-	    " -d driver  check only \"driver\", not all of them\n"
-	    " -m path    change driver module path to \"path\"\n"
-	    " -e path    add an extra driver module path to be searched\n"
-	    " -a         print all devices supported by each video driver "
-	    "instead of only the ones found in your machine\n"
-	    " -v         print more information\n"
-	    " -h         print this help\n",
+"Options to select/find drivers:\n"
+"   -d [driver]       check only \"driver\", not all of them\n"
+"   -m [path]         change driver module path to \"path\"\n"
+"   -e [path]         add an extra driver module path to be searched\n"
+" Options to change the output:\n"
+"   -o [output mode]  select the output mode, which should be one of these:\n"
+"      present        print the devices present in your machine and the names\n"
+"                     of their respective video drivers (this is the default\n"
+"                     if \"-o\" is not specified)\n"
+"      supported      print a list of all devices supported by all the video\n"
+"                     driver found\n"
+"      moduledata     print only the video drivers module data\n"
+"   -v                print more information\n"
+"   -h                print this help\n",
 	    progName);
 }
 
@@ -375,7 +393,7 @@ int main(int argc, char *argv[])
 {
     int opt;
     int ret = 0;
-    while ((opt = getopt(argc, argv, "d:m:e:avh")) != -1) {
+    while ((opt = getopt(argc, argv, "d:m:e:o:vh")) != -1) {
 	switch(opt) {
 	case 'd':
 	    driverToUse = optarg;
@@ -386,8 +404,17 @@ int main(int argc, char *argv[])
 	case 'e':
 	    extraModulePath = optarg;
 	    break;
-	case 'a':
-	    mode = PRINT_DEVS_SUPPORTED;
+	case 'o':
+	    if (strcmp(optarg, "present") == 0) {
+		mode = PRINT_DEVS_PRESENT;
+	    } else if (strcmp(optarg, "supported") == 0) {
+		mode = PRINT_DEVS_SUPPORTED;
+	    } else if (strcmp(optarg, "moduledata") == 0) {
+		mode = PRINT_MODULE_DATA;
+	    } else {
+		printUsage(argv[0]);
+		return 1;
+	    }
 	    break;
 	case 'v':
 	    verbose = 1;

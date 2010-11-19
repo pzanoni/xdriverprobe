@@ -11,7 +11,8 @@ place to look for the video drivers.  There's also a verbose mode.
 Main use cases:
 "xdriverprobe": prints the names of the drivers that support your video cards
 and the device id and vendor id of the supported devices
-"xdriverprobe -a": prints a list of supported devices for each video driver
+"xdriverprobe -o supported": prints a list of supported devices for each video
+driver
 "xdriverprobe -h": lists the other options!
 
 = Compiling =
