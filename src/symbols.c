@@ -63,62 +63,62 @@
 #endif
 
 #if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(8,0)
-_X_EXPORT DevPrivateKeyRec    miZeroLineScreenKeyRec;
-_X_EXPORT DevPrivateKeyRec    PictureScreenPrivateKeyRec;
-_X_EXPORT DevPrivateKeyRec    rrPrivKeyRec;
-_X_EXPORT DevPrivateKeyRec    xf86ScreenKeyRec;
+_X_EXPORT DevPrivateKeyRec      miZeroLineScreenKeyRec;
+_X_EXPORT DevPrivateKeyRec      PictureScreenPrivateKeyRec;
+_X_EXPORT DevPrivateKeyRec      rrPrivKeyRec;
+_X_EXPORT DevPrivateKeyRec      xf86ScreenKeyRec;
 #else
-_X_EXPORT DevPrivateKey       miZeroLineScreenKey;
-_X_EXPORT DevPrivateKey       PictureScreenPrivateKey;
-_X_EXPORT DevPrivateKey       rrPrivKey;
-_X_EXPORT DevPrivateKey       xf86ScreenKey;
+_X_EXPORT DevPrivateKey         miZeroLineScreenKey;
+_X_EXPORT DevPrivateKey         PictureScreenPrivateKey;
+_X_EXPORT DevPrivateKey         rrPrivKey;
+_X_EXPORT DevPrivateKey         xf86ScreenKey;
 #endif
 
-_X_EXPORT const unsigned char byte_reversed[256];
-_X_EXPORT ClientPtr           clients[MAXCLIENTS];
-_X_EXPORT CallbackListPtr     ClientStateCallback = NULL;
-_X_EXPORT xf86MonPtr          ConfiguredMonitor = NULL;
-_X_EXPORT TimeStamp           currentTime;
-_X_EXPORT volatile char       dispatchException;
-_X_EXPORT Bool                DPMSEnabled = FALSE;
-_X_EXPORT EventSwapPtr        EventSwapVector[128];
-_X_EXPORT CallbackListPtr     FlushCallback = NULL;
-_X_EXPORT unsigned long       globalSerialNumber = 0;
-_X_EXPORT InputInfo           inputInfo;
-_X_EXPORT BoxRec              miEmptyBox;
-_X_EXPORT RegDataRec          miEmptyData;
-_X_EXPORT int                 monitorResolution = 0;
-_X_EXPORT Bool                noCompositeExtension = TRUE;
-_X_EXPORT Bool                noPanoramiXExtension = TRUE;
-_X_EXPORT Bool                noRenderExtension = TRUE;
-_X_EXPORT Bool                noRRExtension = TRUE;
-_X_EXPORT Bool                noXFree86DRIExtension = TRUE;
+_X_EXPORT const unsigned char   byte_reversed[256];
+_X_EXPORT ClientPtr             clients[MAXCLIENTS];
+_X_EXPORT CallbackListPtr       ClientStateCallback = NULL;
+_X_EXPORT xf86MonPtr            ConfiguredMonitor = NULL;
+_X_EXPORT TimeStamp             currentTime;
+_X_EXPORT volatile char         dispatchException;
+_X_EXPORT Bool                  DPMSEnabled = FALSE;
+_X_EXPORT EventSwapPtr          EventSwapVector[128];
+_X_EXPORT CallbackListPtr       FlushCallback = NULL;
+_X_EXPORT unsigned long         globalSerialNumber = 0;
+_X_EXPORT InputInfo             inputInfo;
+_X_EXPORT BoxRec                miEmptyBox;
+_X_EXPORT RegDataRec            miEmptyData;
+_X_EXPORT int                   monitorResolution = 0;
+_X_EXPORT Bool                  noCompositeExtension = TRUE;
+_X_EXPORT Bool                  noPanoramiXExtension = TRUE;
+_X_EXPORT Bool                  noRenderExtension = TRUE;
+_X_EXPORT Bool                  noRRExtension = TRUE;
+_X_EXPORT Bool                  noXFree86DRIExtension = TRUE;
 #if ABI_VIDEODRV_VERSION < SET_ABI_VERSION(8,0)
-_X_EXPORT PanoramiXData      *panoramiXdataPtr = NULL;
+_X_EXPORT PanoramiXData        *panoramiXdataPtr = NULL;
 #endif
-_X_EXPORT int                 PanoramiXNumScreens = 0;
-_X_EXPORT PaddingInfo         PixmapWidthPaddingInfo[0]; /* dix has 33, not 0 */
+_X_EXPORT int                   PanoramiXNumScreens = 0;
+_X_EXPORT PaddingInfo           PixmapWidthPaddingInfo[0];
 #if ABI_VIDEODRV_VERSION >= SET_ABI_VERSION(8,0)
-_X_EXPORT BoxRec              RegionEmptyBox;
-_X_EXPORT RegDataRec          RegionEmptyData;
+_X_EXPORT BoxRec                RegionEmptyBox;
+_X_EXPORT RegDataRec            RegionEmptyData;
 #endif
-_X_EXPORT ScreenInfo          screenInfo;
-_X_EXPORT int                 screenIsSaved = 0;
-_X_EXPORT ClientPtr           serverClient = NULL;
-_X_EXPORT unsigned long       serverGeneration = 0;
-_X_EXPORT CallbackListPtr     ServerGrabCallback = NULL;
-_X_EXPORT WindowPtr           WindowTable[MAXSCREENS];
-_X_EXPORT unsigned long       XRC_DRAWABLE = 0;
-_X_EXPORT confDRIRec          xf86ConfigDRI;
-_X_EXPORT serverLayoutRec     xf86ConfigLayout;
-_X_EXPORT int                 xf86CrtcConfigPrivateIndex = 0;
-_X_EXPORT const DisplayModeRec xf86DefaultModes[0];
-_X_EXPORT xf86InfoRec         xf86Info;
-_X_EXPORT ScrnInfoPtr        *xf86Screens = NULL;
-_X_EXPORT unsigned long       XRT_WINDOW = 0;
+_X_EXPORT ScreenInfo            screenInfo;
+_X_EXPORT int                   screenIsSaved = 0;
+_X_EXPORT ClientPtr             serverClient = NULL;
+_X_EXPORT unsigned long         serverGeneration = 0;
+_X_EXPORT CallbackListPtr       ServerGrabCallback = NULL;
+_X_EXPORT WindowPtr             WindowTable[MAXSCREENS];
+_X_EXPORT unsigned long         XRC_DRAWABLE = 0;
+_X_EXPORT confDRIRec            xf86ConfigDRI;
+_X_EXPORT serverLayoutRec       xf86ConfigLayout;
+_X_EXPORT int                   xf86CrtcConfigPrivateIndex = 0;
+_X_EXPORT const DisplayModeRec  xf86DefaultModes[0];
+_X_EXPORT xf86InfoRec           xf86Info;
+_X_EXPORT ScrnInfoPtr          *xf86Screens = NULL;
+_X_EXPORT unsigned long         XRT_WINDOW = 0;
 
 /* This one is inside xf86Glocals.c (not .h!): */
-_X_EXPORT XF86ConfigPtr xf86configptr = NULL;
+_X_EXPORT XF86ConfigPtr         xf86configptr = NULL;
 
 
 _X_EXPORT CursorPtr GetSpriteCursor(DeviceIntPtr pDev)
